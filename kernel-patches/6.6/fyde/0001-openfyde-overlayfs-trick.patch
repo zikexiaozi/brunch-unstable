@@ -1,0 +1,81 @@
+From e67178b2aa69f435a6699456059cdc5171efd855 Mon Sep 17 00:00:00 2001
+From: Su Yue <glass.su@suse.com>
+Date: Fri, 26 Jan 2024 11:13:58 +0800
+Subject: [PATCH] openfyde overlayfs trick
+
+Signed-off-by: Su Yue <glass.su@suse.com>
+---
+ security/selinux/hooks.c | 36 +++++++++++++++++++++++++++++++++++-
+ 1 file changed, 35 insertions(+), 1 deletion(-)
+
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index bac1c58e1fc3..7499051a3ed8 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -93,6 +93,10 @@
+ #include <linux/fanotify.h>
+ #include <linux/io_uring.h>
+ 
++#ifdef CONFIG_OVERLAY_FS
++#include "../../fs/overlayfs/ovl_entry.h"
++#endif
++
+ #include "avc.h"
+ #include "objsec.h"
+ #include "netif.h"
+@@ -106,6 +110,23 @@
+ 
+ #define SELINUX_INODE_INIT_XATTRS 1
+ 
++static bool is_overlay_sb(struct super_block *sb)
++{
++ const char* fstype = sb->s_type->name;
++ return strcmp(fstype, "overlay") == 0;
++}
++
++static bool is_overlay_inode(struct inode *inode)
++{
++ return is_overlay_sb(inode->i_sb);
++}
++
++#ifdef CONFIG_OVERLAY_FS
++
++extern struct inode *ovl_inode_real(struct inode *inode);
++
++#endif
++
+ struct selinux_state selinux_state;
+ 
+ /* SECMARK reference count */
+@@ -475,6 +496,10 @@ static int selinux_is_sblabel_mnt(struct super_block *sb)
+ 	 */
+ 	BUILD_BUG_ON(SECURITY_FS_USE_MAX != 7);
+ 
++#ifdef CONFIG_OVERLAY_FS
++	if(is_overlay_sb(sb))
++		return 1;
++#endif
+ 	switch (sbsec->behavior) {
+ 	case SECURITY_FS_USE_XATTR:
+ 	case SECURITY_FS_USE_TRANS:
+@@ -3433,7 +3458,16 @@ static int selinux_inode_getsecurity(struct mnt_idmap *idmap,
+ 	 * and lack of permission just means that we fall back to the
+ 	 * in-core context value, not a denial.
+ 	 */
+-	isec = inode_security(inode);
++	if (is_overlay_inode(inode)) {
++#ifdef CONFIG_OVERLAY_FS
++		isec = inode_security(ovl_inode_real(inode));
++#else
++		isec = inode_security(inode);
++#endif
++	}else {
++		isec = inode_security(inode);
++	}
++
+ 	if (has_cap_mac_admin(false))
+ 		error = security_sid_to_context_force(isec->sid, &context,
+ 						      &size);
+-- 
+2.43.0
+
