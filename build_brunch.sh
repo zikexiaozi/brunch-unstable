@@ -296,17 +296,17 @@ rm -r ./alsa-ucm-conf || { echo "Failed to cleanup ucm configuration directory";
 
 git clone --depth=1 -b main https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git || { echo "Failed to clone the linux firmware git"; exit 1; }
 cd ./linux-firmware || { echo "Failed to enter the linux firmware directory"; exit 1; }
-make -j"$NTHREADS" DESTDIR=./tmp FIRMWAREDIR=/lib/firmware install || { echo "Failed to install firmwares in temporary directory"; exit 1; }
+make -j"$NTHREADS" DESTDIR=./tmp ZSTD_CLEVEL=19 FIRMWAREDIR=/lib/firmware install-zst || { echo "Failed to install firmwares in temporary directory"; exit 1; }
 mv ./tmp/lib/firmware ./out || { echo "Failed to move the firmwares temporary directory"; exit 1; }
-rm -rf ./out/bnx2x
-rm -rf ./out/dpaa2
-rm -rf ./out/liquidio
-rm -rf ./out/mellanox
-rm -rf ./out/mrvl/prestera
-rm -rf ./out/netronome
-rm -rf ./out/qcom
-rm -rf ./out/qed
-rm -rf ./out/ti-connectivity
+rm -rf ./out/bnx2x*
+rm -rf ./out/dpaa2*
+rm -rf ./out/liquidio*
+rm -rf ./out/mellanox*
+rm -rf ./out/mrvl/prestera*
+rm -rf ./out/netronome*
+rm -rf ./out/qcom*
+rm -rf ./out/qed*
+rm -rf ./out/ti-connectivity*
 curl -L https://git.kernel.org/pub/scm/linux/kernel/git/sforshee/wireless-regdb.git/plain/regulatory.db -o ./out/regulatory.db || { echo "Failed to download the regulatory db"; exit 1; }
 curl -L https://git.kernel.org/pub/scm/linux/kernel/git/sforshee/wireless-regdb.git/plain/regulatory.db.p7s -o ./out/regulatory.db.p7s || { echo "Failed to download the regulatory db"; exit 1; }
 cp -r ../../../../extra-firmwares/* ./out/ || { echo "Failed to copy brunch extra firmware files"; exit 1; }
