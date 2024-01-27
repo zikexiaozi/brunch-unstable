@@ -219,17 +219,17 @@ fi
 for (( i=1; i<=12; i++ )); do
 	case $i in
 		2)
-			source_start=$(cgpt show -i 4 -b "$source")
-			size=$(cgpt show -i 4 -s "$source")
+			source_start=$(( $(cgpt show -i 4 -b "$source") / 8 ))
+			size=$(( $(cgpt show -i 4 -s "$source") / 8 ))
 		;;
 		5)
-			source_start=$(cgpt show -i 3 -b "$source")
-			size=$(cgpt show -i 3 -s "$source")
+			source_start=$(( $(cgpt show -i 3 -b "$source") / 8 ))
+			size=$(( $(cgpt show -i 3 -s "$source") / 8 ))
 		;;
 		7)
 			source_start=0
 			image="$(dirname $0)/rootc.img"
-			size=$(du --apparent-size -B 512 $image | sed 's/\t.*//g')
+			size=$(du --apparent-size -B 4096 $image | sed 's/\t.*//g')
 		;;
 		6|9|10|11)
 			continue
@@ -237,18 +237,18 @@ for (( i=1; i<=12; i++ )); do
 		12)
 			source_start=0
 			if [ -z legacy_boot ]; then image="$(dirname $0)/efi_secure.img"; else image="$(dirname $0)/efi_legacy.img"; fi
-			size=$(du --apparent-size -B 512 $image | sed 's/\t.*//g')
+			size=$(du --apparent-size -B 4096 $image | sed 's/\t.*//g')
 		;;
 		*)
-			source_start=$(cgpt show -i $i -b "$source")
-			size=$(cgpt show -i $i -s "$source")
+			source_start=$(( $(cgpt show -i $i -b "$source") / 8 ))
+			size=$(( $(cgpt show -i $i -s "$source") / 8 ))
 		;;
 	esac
-	destination_start=$(cgpt show -i $i -b "$destination")
+	destination_start=$(( $(cgpt show -i $i -b "$destination") / 8 ))
 	if [ ! -z "$zenity" ]; then
-		dd if="$image" ibs=512 count="$size" skip="$source_start" 2> /dev/null | pv -n -s $(( $size * 512 )) 2> >(zenity --height=480 --width=640 --title="Brunch installer" --progress --auto-close --text="Writing partition $i..." --percentage=0 --no-cancel) | dd of="$destination" obs=512 seek="$destination_start" conv=notrunc 2> /dev/null || error $i
+		dd if="$image" ibs=4096 count="$size" skip="$source_start" 2> /dev/null | pv -n -s $(( $size * 4096 )) 2> >(zenity --height=480 --width=640 --title="Brunch installer" --progress --auto-close --text="Writing partition $i..." --percentage=0 --no-cancel) | dd of="$destination" obs=4096 seek="$destination_start" conv=notrunc 2> /dev/null || error $i
 	else
-		dd if="$image" ibs=512 count="$size" skip="$source_start" 2> /dev/null | pv -s $(( $size * 512 )) | dd of="$destination" obs=512 seek="$destination_start" conv=notrunc 2> /dev/null || error $i
+		dd if="$image" ibs=4096 count="$size" skip="$source_start" 2> /dev/null | pv -s $(( $size * 4096 )) | dd of="$destination" obs=4096 seek="$destination_start" conv=notrunc 2> /dev/null || error $i
 	fi
 done
 }
