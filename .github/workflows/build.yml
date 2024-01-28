@@ -124,7 +124,7 @@ jobs:
     name: Make a Brunch release
     permissions:
       contents: write
-    needs: build-brunch
+    needs: build-final
     runs-on: ubuntu-22.04
     steps:
       - name: Download built artifacts
