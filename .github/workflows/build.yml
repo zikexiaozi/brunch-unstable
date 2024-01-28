@@ -49,7 +49,7 @@ jobs:
       - name: Checkout Brunch source code
         uses: actions/checkout@v4
       - name: Build brunch
-        run: sudo bash build_brunch.sh
+        run: sudo bash build_firmware.sh
       - name: Compress firmware files
         run: tar zcf /tmp/firmware.tar.gz firmware
       - name: Upload artifacts
