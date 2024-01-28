@@ -79,32 +79,25 @@ jobs:
           mv kernel.tar.gz packages
           mv firmware.tar.gz packages
           tar zcf packages.tar.gz packages
-      - name: Identify custom version
-        if: ${{ (github.repository != 'sebanc/brunch') && (github.repository != 'sebanc/brunch-unstable') }}
-        run: echo "RELEASE_VERSION_TYPE=custom" >> $GITHUB_ENV
-      - name: Identify unstable version
-        if: ${{ (github.repository == 'sebanc/brunch-unstable') }}
-        run: echo "RELEASE_VERSION_TYPE=unstable" >> $GITHUB_ENV
       - name: Identify stable version
-        if: ${{ (github.repository == 'sebanc/brunch') }}
-        run: echo "RELEASE_VERSION_TYPE=stable" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION_TYPE=x86_64" >> $GITHUB_ENV
       - name: Generate release details
         run: |
-          RELEASE_FILE=$(date '+%Y%m%d%H%M%S')
-          RELEASE_VERSION=0
-          RELEASE_DATE=${RELEASE_FILE}
-          mv "packages.tar.gz" "${RELEASE_FILE}.tar.gz"
-          echo "Brunch release renamed from brunch_${RELEASE_VERSION}_${RELEASE_DATE}.tar.gz to brunch_${RELEASE_VERSION}_${RELEASE_VERSION_TYPE}_${RELEASE_DATE}.tar.gz"
-          echo "RELEASE_FILE=${RELEASE_FILE}.tar.gz" >> $GITHUB_ENV
-          echo "RELEASE_TAG=${RELEASE_VERSION}-${RELEASE_VERSION_TYPE}-${RELEASE_DATE}" >> $GITHUB_ENV
-          echo "RELEASE_NAME=${RELEASE_VERSION} ${RELEASE_VERSION_TYPE} ${RELEASE_DATE}" >> $GITHUB_ENV
+          RELEASE_DATE=$(date '+%Y%m%d%H%M%S')
+          RELEASE_VERSION=""
+          RELEASE_FILE="${RELEASE_DATE}_${RELEASE_VERSION_TYPE}.tar.gz"
+          mv "packages.tar.gz" "${RELEASE_FILE}"
+          echo "RELEASE_FILE=${RELEASE_FILE}" >> $GITHUB_ENV
+          echo "RELEASE_TAG=${RELEASE_DATE}-${RELEASE_VERSION_TYPE}-${RELEASE_VERSION}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=${RELEASE_DATE} ${RELEASE_VERSION_TYPE} version: ${RELEASE_VERSION}" >> $GITHUB_ENV
+          echo "RELEASE_DATE=${RELEASE_DATE}" >> $GITHUB_ENV
       - name: Create a release and upload artifacts as assets
         uses: ncipollo/release-action@v1
         with:
           artifacts: "${{ env.RELEASE_FILE }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
-          tag: "${{ env.RELEASE_FILE }}"
+          tag: "${{ env.RELEASE_DATE }}"
           name: "${{ env.RELEASE_NAME }}"
           commit: "${{ github.ref_name }}"
           body: "${{ github.event.head_commit.message }}"
