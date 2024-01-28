@@ -151,9 +151,4 @@ for kernel in $kernels; do
 	make -j"$NTHREADS" O=out INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${cwd}/kernel modules_install || { echo "Failed to install modules for kernel $kernel"; exit 1; }
 	rm -f ${cwd}/kernel/lib/modules/"$kernel_version"/build || { echo "Failed to remove the build directory for kernel $kernel"; exit 1; }
 	rm -f ${cwd}/kernel/lib/modules/"$kernel_version"/source || { echo "Failed to remove the source directory for kernel $kernel"; exit 1; }
-
-	cd ${cwd}/kernel || { echo "Failed to enter directory for kernel $kernel"; exit 1; }
-	tar zcf ${cwd}/packages/kernel-"$kernel_version".tar.gz * --owner=0 --group=0 || { echo "Failed to create archive for kernel $kernel"; exit 1; }
-	rm -rf ${cwd}/kernel || { echo "Failed to cleanup for kernel $kernel"; exit 1; }
 done
-
