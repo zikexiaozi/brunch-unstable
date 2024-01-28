@@ -52,10 +52,6 @@ jobs:
           sudo apt clean
       - name: Checkout Brunch source code
         uses: actions/checkout@v4
-      - name: Download built kernels
-        uses: actions/download-artifact@v3
-        with:
-          path: /tmp
       - name: Build brunch
         run: sudo bash build_brunch.sh
       - name: Compress firmware files
@@ -83,7 +79,7 @@ jobs:
           name: firmware
       - name: go packaging
         run: |
-          mv kernels.tar.gz packages
+          mv kernel.tar.gz packages
           mv firmware.tar.gz packages
           mkdir packages
           tar zcf packages.tar.gz packages
