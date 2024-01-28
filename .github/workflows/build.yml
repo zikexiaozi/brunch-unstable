@@ -75,9 +75,9 @@ jobs:
           name: firmware
       - name: go packaging
         run: |
+          mkdir packages
           mv kernel.tar.gz packages
           mv firmware.tar.gz packages
-          mkdir packages
           tar zcf packages.tar.gz packages
       - name: Identify custom version
         if: ${{ (github.repository != 'sebanc/brunch') && (github.repository != 'sebanc/brunch-unstable') }}
