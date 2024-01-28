@@ -71,8 +71,7 @@ jobs:
     name: Make a release
     permissions:
       contents: write
-    needs: build-firmware
-    needs: build-kernels
+    needs: [build-firmware, build-kernels]
     runs-on: ubuntu-22.04
     steps:
       - name: Download built kernels
