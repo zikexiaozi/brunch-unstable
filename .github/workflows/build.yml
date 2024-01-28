@@ -127,12 +127,19 @@ jobs:
     needs: build-final
     runs-on: ubuntu-22.04
     steps:
-      - name: set env
-          run: echo "::set-env name=NOW::$(date +'%Y-%m-%dT%H:%M:%S')"
       - name: Download built artifacts
         uses: actions/download-artifact@v3
         with:
           name: brunch-build
+      - name: Identify custom version
+        if: ${{ (github.repository != 'sebanc/brunch') && (github.repository != 'sebanc/brunch-unstable') }}
+        run: echo "RELEASE_VERSION_TYPE=custom" >> $GITHUB_ENV
+      - name: Identify unstable version
+        if: ${{ (github.repository == 'sebanc/brunch-unstable') }}
+        run: echo "RELEASE_VERSION_TYPE=unstable" >> $GITHUB_ENV
+      - name: Identify stable version
+        if: ${{ (github.repository == 'sebanc/brunch') }}
+        run: echo "RELEASE_VERSION_TYPE=stable" >> $GITHUB_ENV
       - name: Generate release details
         run: |
           RELEASE_FILE=$(ls brunch_r*.tar.gz)
@@ -150,7 +157,7 @@ jobs:
           artifacts: "${{ env.RELEASE_FILE }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
-          tag: "${{ env.NOW }}"
-          name: "${{ env.NOW }}"
+          tag: "${{ env.RELEASE_TAG }}"
+          name: "${{ env.RELEASE_NAME }}"
           commit: "${{ github.ref_name }}"
           body: "${{ github.event.head_commit.message }}"
