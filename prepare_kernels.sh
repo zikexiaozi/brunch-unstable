@@ -68,12 +68,13 @@ for kernel in $kernels; do
 		6.6)
 			echo "Downloading ChromiumOS kernel source for kernel $kernel version $kernel_version"
 			curl -L "https://chromium.googlesource.com/chromiumos/third_party/kernel/+archive/$kernel_remote_path$kernel.tar.gz" -o "./kernels/chromiumos-$kernel.tar.gz" || { echo "Kernel source download failed"; exit 1; }
-			mkdir "./kernels/chromebook-6.6" "./kernels/6.6"
+			mkdir "./kernels/chromebook-6.6" # "./kernels/6.6"
 			tar -C "./kernels/chromebook-6.6" -zxf "./kernels/chromiumos-$kernel.tar.gz" || { echo "Kernel $kernel source extraction failed"; exit 1; }
 			tar -C "./kernels/6.6" -zxf "./kernels/chromiumos-$kernel.tar.gz" chromeos || { echo "Kernel $kernel source extraction failed"; exit 1; }
 			rm -f "./kernels/chromiumos-$kernel.tar.gz"
 			apply_patches "chromebook-6.6"
 			make_config "chromebook-6.6"
+			#mkdir "./kernels/6.6"
 			#echo "Downloading Mainline kernel source for kernel $kernel version $kernel_version"
 			#curl -L "https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-$kernel_version.tar.gz" -o "./kernels/mainline-$kernel.tar.gz" || { echo "Kernel source download failed"; exit 1; }
 			#tar -C "./kernels/6.6" -zxf "./kernels/mainline-$kernel.tar.gz" --strip 1 || { echo "Kernel $kernel source extraction failed"; exit 1; }
