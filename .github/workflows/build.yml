@@ -82,8 +82,8 @@ jobs:
           name: built-kernel-${{ matrix.kernel }}
           path: /tmp/built-kernel-${{ matrix.kernel }}.tar.gz
           if-no-files-found: error
-  build-brunch:
-    name: Build Brunch
+  build-final:
+    name: Build firmware and package
     needs: build-kernels
     runs-on: ubuntu-22.04
     steps:
@@ -118,7 +118,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: brunch-build
-          path: out/brunch_r*.tar.gz
+          path: packages*.tar.gz
           if-no-files-found: error
   release:
     name: Make a Brunch release
