@@ -7,8 +7,6 @@ cwd="$(pwd)"
 
 if [ -d ./firmware ]; then rm -r ./firmware; fi
 
-mkdir firmware
-exit 0
 git clone --depth=1 -b main https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git || { echo "Failed to clone the linux firmware git"; exit 1; }
 cd ./linux-firmware || { echo "Failed to enter the linux firmware directory"; exit 1; }
 make -j"$NTHREADS" DESTDIR=./tmp ZSTD_CLEVEL=19 FIRMWAREDIR=/lib/firmware install-zst || { echo "Failed to install firmwares in temporary directory"; exit 1; }
