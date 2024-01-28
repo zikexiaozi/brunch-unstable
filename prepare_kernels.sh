@@ -127,9 +127,34 @@ for kernel in $kernels; do
 done
 }
 
+if [ ! -d /home/runner/work ]; then NTHREADS=$(nproc); else NTHREADS=$(($(nproc)*4)); fi
+
 rm -rf ./kernels
 mkdir ./kernels
 
+rm -rf ./kernel
+mkdir ./kernel
+
+cwd="$(pwd)"
 chromeos_version="R122"
 download_and_patch_kernels
+
+kernels=$(ls -d ./kernels/* | sed 's#./kernels/##g')
+
+for kernel in $kernels; do
+	echo "Building kernel $kernel"
+	KCONFIG_NOTIMESTAMP=1 KBUILD_BUILD_TIMESTAMP='' KBUILD_BUILD_USER=chronos KBUILD_BUILD_HOST=localhost make -C "./kernels/$kernel" -j"$NTHREADS" O=out || { echo "Kernel build failed"; exit 1; }
+
+	cd "./kernels/$kernel"
+	kernel_version="$(file ./out/arch/x86/boot/bzImage | cut -d' ' -f9)"
+	[ ! "$kernel_version" == "" ] || { echo "Failed to read version for kernel $kernel"; exit 1; }
+	cp ./out/arch/x86/boot/bzImage ${cwd}/kernel/kernel-"$kernel" || { echo "Failed to copy the kernel $kernel"; exit 1; }
+	make -j"$NTHREADS" O=out INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${cwd}/kernel modules_install || { echo "Failed to install modules for kernel $kernel"; exit 1; }
+	rm -f ${cwd}/kernel/lib/modules/"$kernel_version"/build || { echo "Failed to remove the build directory for kernel $kernel"; exit 1; }
+	rm -f ${cwd}/kernel/lib/modules/"$kernel_version"/source || { echo "Failed to remove the source directory for kernel $kernel"; exit 1; }
+
+	cd ${cwd}/kernel || { echo "Failed to enter directory for kernel $kernel"; exit 1; }
+	tar zcf ${cwd}/packages/kernel-"$kernel_version".tar.gz * --owner=0 --group=0 || { echo "Failed to create archive for kernel $kernel"; exit 1; }
+	rm -rf ${cwd}/kernel || { echo "Failed to cleanup for kernel $kernel"; exit 1; }
+done
 
