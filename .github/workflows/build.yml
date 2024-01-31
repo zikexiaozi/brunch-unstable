@@ -78,7 +78,7 @@ jobs:
           tar -xvf kernel.tar.gz -C temp
           tar -xvf firmware.tar.gz -C temp
           tar -C temp zcvf packages/libs.tar.gz temp/usr temp/lib
-          cp temp/kernel-chromebook-6.6 packages/vmlinux
+          cp temp/kernel-* packages/vmlinux
           rm -rf temp
           tar -zcvf packages.tar.gz packages
       - name: Identify stable version
