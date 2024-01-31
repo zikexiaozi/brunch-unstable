@@ -45,9 +45,10 @@ rm /tmp/amd-ucode.tar.zst || { echo "Failed to cleanup amd ucode"; exit 1; }
 curl -L https://archlinux.org/packages/extra/any/intel-ucode/download/ -o /tmp/intel-ucode.tar.zst || { echo "Failed to download intel ucode"; exit 1; }
 tar -C ./out -xf /tmp/intel-ucode.tar.zst boot/intel-ucode.img --strip 1 || { echo "Failed to extract intel ucode"; exit 1; }
 rm /tmp/intel-ucode.tar.zst || { echo "Failed to cleanup intel ucode"; exit 1; }
-mkdir -p ./final/lib
-mv ./out ./final/lib/firmware
+mkdir -p ${cwd}/final/lib
+mv ./out ${cwd}/final/lib/firmware
 cd ${cwd}
+
 
 #for sof firmware
 download_sof ./sof.tar.zst
