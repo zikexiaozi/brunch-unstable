@@ -5,6 +5,15 @@ if [ $(whoami) != "root" ]; then echo "Please run with sudo"; exit 1; fi
 
 cwd="$(pwd)"
 
+download_sof()
+{
+    #url="$(curl -s https://api.github.com/repos/thesofproject/sof-bin/releases/latest \
+#        | grep tarball_url \
+#        | sed 's/  "tarball_url": "//g' | sed "s/\",//g")"
+    url="https://arch.mirror.kescher.at/extra/os/x86_64/sof-firmware-2023.12-1-x86_64.pkg.tar.zst"
+    wget -O $1 $url
+}
+
 if [ -d ./firmware ]; then rm -r ./firmware; fi
 
 git clone --depth=1 -b main https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git || { echo "Failed to clone the linux firmware git"; exit 1; }
@@ -30,4 +39,8 @@ tar -C ./out -xf /tmp/intel-ucode.tar.zst boot/intel-ucode.img --strip 1 || { ec
 rm /tmp/intel-ucode.tar.zst || { echo "Failed to cleanup intel ucode"; exit 1; }
 mv ./out ${cwd}/firmware
 cd ${cwd}
+download_sof ./sof.tar.zst
+mkdir sof
+tar -xvf sof.tar.gz -C sof
+cp -r sof/usr/lib/firmware/* ${cwd}/firmware
 rm -r ./linux-firmware || { echo "Failed to cleanup firmwares directory"; exit 1; }
