@@ -134,11 +134,11 @@ mkdir ./kernels
 rm -rf ./kernel
 mkdir ./kernel
 
-mkdir -p kernel/lib/modules/
-touch kernel/kernel-chromebook-6.6
-touch kernel/lib/modules/9
-
-exit 0
+#only for test
+#mkdir -p kernel/lib/modules/
+#touch kernel/kernel-chromebook-6.6
+#touch kernel/lib/modules/9
+#exit 0
 
 cwd="$(pwd)"
 chromeos_version="R122"
