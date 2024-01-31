@@ -77,7 +77,7 @@ jobs:
           mkdir packages
           tar -xvf kernel.tar.gz -C temp
           tar -xvf firmware.tar.gz -C temp
-          tar -C temp zcvf packages/libs.tar.gz temp/usr temp/lib
+          tar -C temp -zcvf packages/libs.tar.gz usr lib
           cp temp/kernel-* packages/vmlinux
           rm -rf temp
           tar -zcvf packages.tar.gz packages
