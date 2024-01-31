@@ -73,10 +73,14 @@ jobs:
           name: firmware
       - name: go repackaging
         run: |
+          mkdir temp
           mkdir packages
-          tar -xvf kernel.tar.gz -C packages
-          tar -xvf firmware.tar.gz -C packages
-          tar zcvf packages.tar.gz packages
+          tar -xvf kernel.tar.gz -C temp
+          tar -xvf firmware.tar.gz -C temp
+          tar -C temp zcvf packages/libs.tar.gz temp/usr temp/lib
+          cp temp/kernel-chromebook-6.6 packages/vmlinux
+          rm -rf temp
+          tar -zcvf packages.tar.gz packages
       - name: Identify stable version
         run: echo "RELEASE_VERSION_TYPE=x86_64" >> $GITHUB_ENV
       - name: Generate release details
