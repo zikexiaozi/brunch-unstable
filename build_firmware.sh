@@ -54,7 +54,7 @@ cd ${cwd}
 download_sof ./sof.tar.zst
 mkdir sof
 tar -xvf ./sof.tar.zst -C sof
-cp -r sof/usr/lib/firmware/* ${cwd}/firmware
+cp -r sof/usr/lib/firmware/* ${cwd}/final/lib/firmware
 
 #for alsa conf
 mkdir -p ./final/usr/share/alsa
