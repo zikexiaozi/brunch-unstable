@@ -71,12 +71,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: firmware
-      - name: go packaging
+      - name: go repackaging
         run: |
           mkdir packages
-          mv kernel.tar.gz packages
-          mv firmware.tar.gz packages
-          tar zcf packages.tar.gz packages
+          tar -xvf kernel.tar.gz -C packages
+          tar -xvf firmware.tar.gz -C packages
+          tar zcvf packages.tar.gz packages
       - name: Identify stable version
         run: echo "RELEASE_VERSION_TYPE=x86_64" >> $GITHUB_ENV
       - name: Generate release details
