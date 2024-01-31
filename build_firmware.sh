@@ -11,10 +11,18 @@ download_sof()
 #        | grep tarball_url \
 #        | sed 's/  "tarball_url": "//g' | sed "s/\",//g")"
     url="https://arch.mirror.kescher.at/extra/os/x86_64/sof-firmware-2023.12-1-x86_64.pkg.tar.zst"
-    wget -O $1 $url
+    wget -O "$1" "$url"
+}
+
+download_alsa_conf()
+{
+    curl -L -o "$1" https://github.com/alsa-project/alsa-ucm-conf/archive/refs/heads/master.tar.gz
 }
 
 if [ -d ./firmware ]; then rm -r ./firmware; fi
+if [ -d ./final ]; then rm -r ./final; fi
+
+mkdir final
 
 git clone --depth=1 -b main https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git || { echo "Failed to clone the linux firmware git"; exit 1; }
 cd ./linux-firmware || { echo "Failed to enter the linux firmware directory"; exit 1; }
@@ -37,10 +45,21 @@ rm /tmp/amd-ucode.tar.zst || { echo "Failed to cleanup amd ucode"; exit 1; }
 curl -L https://archlinux.org/packages/extra/any/intel-ucode/download/ -o /tmp/intel-ucode.tar.zst || { echo "Failed to download intel ucode"; exit 1; }
 tar -C ./out -xf /tmp/intel-ucode.tar.zst boot/intel-ucode.img --strip 1 || { echo "Failed to extract intel ucode"; exit 1; }
 rm /tmp/intel-ucode.tar.zst || { echo "Failed to cleanup intel ucode"; exit 1; }
-mv ./out ${cwd}/firmware
+mkdir -p ./final/lib
+mv ./out ./final/lib/firmware
 cd ${cwd}
+
+#for sof firmware
 download_sof ./sof.tar.zst
 mkdir sof
 tar -xvf ./sof.tar.zst -C sof
 cp -r sof/usr/lib/firmware/* ${cwd}/firmware
+
+#for alsa conf
+mkdir -p ./final/usr/share/alsa
+download_alsa_conf alsa-ucm-conf.tar.gz
+tar xvzf alsa-ucm-conf.tar.gz -C ./final/usr/share/alsa --strip-components=1 --wildcards "*/ucm" "*/ucm2"
+
+# compress all firmwares and ucm conf
+tar -C final -zcvf /tmp/firmware.tar.gz ./
 rm -r ./linux-firmware || { echo "Failed to cleanup firmwares directory"; exit 1; }
