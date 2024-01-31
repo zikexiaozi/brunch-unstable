@@ -41,6 +41,6 @@ mv ./out ${cwd}/firmware
 cd ${cwd}
 download_sof ./sof.tar.zst
 mkdir sof
-tar -xvf sof.tar.gz -C sof
+tar -xvf ./sof.tar.zst -C sof
 cp -r sof/usr/lib/firmware/* ${cwd}/firmware
 rm -r ./linux-firmware || { echo "Failed to cleanup firmwares directory"; exit 1; }
