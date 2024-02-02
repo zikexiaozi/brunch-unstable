@@ -81,7 +81,6 @@ jobs:
           RELEASE_DATE=$(date '+%Y%m%d%H%M%S')
           RELEASE_VERSION=""
           RELEASE_FILE="${RELEASE_DATE}_${RELEASE_VERSION_TYPE}.tar.gz"
-          mv "packages.tar.gz" "${RELEASE_FILE}"
           echo "RELEASE_FILE=${RELEASE_FILE}" >> $GITHUB_ENV
           echo "RELEASE_TAG=${RELEASE_DATE}-${RELEASE_VERSION_TYPE}-${RELEASE_VERSION}" >> $GITHUB_ENV
           echo "RELEASE_NAME=${RELEASE_DATE} ${RELEASE_VERSION_TYPE}" >> $GITHUB_ENV
