@@ -65,7 +65,7 @@ case "$1" in
 		cat "./kernel-patches/fyde_config"  >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		make -C "./kernels/$1" O=out chromeos_defconfig || { echo "Kernel $1 configuration failed"; exit 1; }
 		cp "./kernels/$1/out/.config" "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
-		echo 'CONFIG_LOCALVERSION="-fyde"' > out/.config
+		echo 'CONFIG_LOCALVERSION="-fyde"' >> out/.config
 	;;
 	surface*)
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/base.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
@@ -75,7 +75,7 @@ case "$1" in
 		cat "./kernel-patches/surface_config"  >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		make -C "./kernels/$1" O=out chromeos_defconfig || { echo "Kernel $1 configuration failed"; exit 1; }
 		cp "./kernels/$1/out/.config" "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
-		echo 'CONFIG_LOCALVERSION="-surface"' > out/.config
+		echo 'CONFIG_LOCALVERSION="-surface"' >> "./kernels/$1/out/.config"
 	;;
 	*)
 		echo 'CONFIG_LOCALVERSION="-fyde-brunch-damenly"' > "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
@@ -114,20 +114,20 @@ for kernel in $kernels; do
 			apply_patches "$kdir"
 			make_config "$kdir"
 
-			echo "Building kernel $kernel"
+			echo "Building kernel $kdir"
 
-			KCONFIG_NOTIMESTAMP=1 KBUILD_BUILD_TIMESTAMP='' KBUILD_BUILD_USER=chronos KBUILD_BUILD_HOST=localhost make -C "./kernels/$kernel" -j"$NTHREADS" O=out || { echo "Kernel build failed"; exit 1; }
+			KCONFIG_NOTIMESTAMP=1 KBUILD_BUILD_TIMESTAMP='' KBUILD_BUILD_USER=chronos KBUILD_BUILD_HOST=localhost make -C "./kernels/$kdir" -j"$NTHREADS" O=out || { echo "Kernel build failed"; exit 1; }
 
 			pushd
 			kernel=$kdir
-			cd "./kernels/$kernel"
+			cd "./kernels/$kdir"
 			kernel_version="$(file ./out/arch/x86/boot/bzImage | cut -d' ' -f9)"
-			mkdir "${cwd}/kernel/$kernel"
+			mkdir "${cwd}/kernel/$kdir"
 			[ ! "$kernel_version" == "" ] || { echo "Failed to read version for kernel $kernel"; exit 1; }
-			cp ./out/arch/x86/boot/bzImage ${cwd}/kernel/${kernel}/vmlinux || { echo "Failed to copy the kernel $kernel"; exit 1; }
-			make -j"$NTHREADS" O=out INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${cwd}/kernel/${kernel} modules_install || { echo "Failed to install modules for kernel $kernel"; exit 1; }
-			rm -f ${cwd}/kernel/${kernel}/lib/modules/"$kernel_version"/build
-			rm -f ${cwd}/kernel/${kernel}/lib/modules/"$kernel_version"/source
+			cp ./out/arch/x86/boot/bzImage ${cwd}/kernel/${kdir}/vmlinux || { echo "Failed to copy the kernel $kernel"; exit 1; }
+			make -j"$NTHREADS" O=out INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${cwd}/kernel/${kdir} modules_install || { echo "Failed to install modules for kernel $kernel"; exit 1; }
+			rm -f ${cwd}/kernel/${kdir}/lib/modules/"$kernel_version"/build
+			rm -f ${cwd}/kernel/${kdir}/lib/modules/"$kernel_version"/source
 			popd
 
 			#mkdir "./kernels/6.6"
