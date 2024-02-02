@@ -188,11 +188,12 @@ done
 
 download_and_build_kernels
 
+cd $cwd
 rm -rf kernels/*
 
 for config in $configs; do
 for kernel in $kernels; do
-	local kdir="${config}-${kernel}"
+	kdir="${config}-${kernel}"
 	tar -C kernel/$kdir -zcvf "kernels/${kdir}.tar.gz" ./
 done
 done
