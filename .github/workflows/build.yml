@@ -24,7 +24,7 @@ jobs:
       - name: Download kernels and apply patches
         run: ./prepare_kernels.sh
       - name: Compress kernels source files
-        run: tar -C kernels -zvcf /tmp/kernel.tar.gz ./
+        run: tar -C kernels -zvcf /tmp/kernels.tar.gz ./
       - name: Upload kernels source
         uses: actions/upload-artifact@v3
         with:
