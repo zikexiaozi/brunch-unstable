@@ -69,11 +69,11 @@ jobs:
       - name: go repackaging
         run: |
           release_files="firmware.tar.gz"
+          mkdir temp
           tar -xvf kernels.tar.gz -C temp
           kernel_files="$(ls ./temp/)"
           release_files="$release_files $kernel_files"
           echo "release_files=${release_files}" >> $GITHUB_ENV
-          rm -rf temp
       - name: Identify stable version
         run: echo "RELEASE_VERSION_TYPE=x86_64" >> $GITHUB_ENV
       - name: Generate release details
