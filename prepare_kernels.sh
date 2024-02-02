@@ -29,7 +29,8 @@ for patch_type in "base" "others" "chromeos" "all_devices" "surface_devices" "su
 	fi
 done
 
-if [ echo "$1" | grep -qi "surface" ]; then
+echo "$1" | grep -qi "surface"
+if [ "$?" -eq 0 ]; then
 	for patch in ./kernel-patches/"$1"/surface/*.patch; do
 		echo "Applying patch: $patch"
 		patch -d"./kernels/$1" -p1 --no-backup-if-mismatch -N < "$patch" || { echo "Kernel $1 patch failed"; exit 1; }
