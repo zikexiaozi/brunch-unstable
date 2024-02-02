@@ -27,14 +27,14 @@ jobs:
         run: ./prepare_kernels.sh
       - name: Define kernels matrix
         id: kernels
-        run: echo "matrix=$(echo [\"$(ls -d ./kernels/*  | cut -f3 -d'/' | sed -Ez '$ s/\n+$//' | sed -z 's#\n#","#g')\"])" >> $GITHUB_OUTPUT
+        run: echo "matrix=$(echo [\"$(ls ./kernel/* \"])" >> $GITHUB_OUTPUT
       - name: Compress kernels source files
-        run: tar -C kernel -zvcf /tmp/kernel.tar.gz ./
+        run: tar -C kernels -zvcf /tmp/kernel.tar.gz ./
       - name: Upload kernels source
         uses: actions/upload-artifact@v3
         with:
           name: kernels
-          path: /tmp/kernel.tar.gz
+          path: /tmp/kernels.tar.gz
           if-no-files-found: error
   build-firmware:
     name: Build firmware and package
@@ -73,14 +73,12 @@ jobs:
           name: firmware
       - name: go repackaging
         run: |
-          mkdir temp
-          mkdir packages
-          tar -xvf kernel.tar.gz -C temp
-          tar -xvf firmware.tar.gz -C temp
-          tar -C temp -zcvf packages/libs.tar.gz usr lib
-          cp temp/kernel-* packages/vmlinux
+          release_files="firmware.tar.gz"
+          tar -xvf kernels.tar.gz -C temp
+          kernel_files="$(ls ./temp/)"
+          release_files="$release_files $kernel_files"
+          echo "release_files=${release_files}" >> $GITHUB_ENV
           rm -rf temp
-          tar -zcvf packages.tar.gz packages
       - name: Identify stable version
         run: echo "RELEASE_VERSION_TYPE=x86_64" >> $GITHUB_ENV
       - name: Generate release details
@@ -96,7 +94,7 @@ jobs:
       - name: Create a release and upload artifacts as assets
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "${{ env.RELEASE_FILE }}"
+          artifacts: "firmware.tar.gz,temp/*tar.gz"
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
           tag: "${{ env.RELEASE_DATE }}"

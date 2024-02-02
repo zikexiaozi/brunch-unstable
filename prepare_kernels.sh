@@ -1,5 +1,23 @@
 #!/bin/bash
 
+set -x
+if [ ! -d /home/runner/work ]; then NTHREADS=$(nproc); else NTHREADS=$(($(nproc)*4)); fi
+
+rm -rf ./kernels
+mkdir ./kernels
+
+rm -rf ./kernel
+mkdir ./kernel
+
+#only for test
+#mkdir -p kernel/lib/modules/
+#touch kernel/kernel-chromebook-6.6
+#touch kernel/lib/modules/9
+#exit 0
+
+cwd="$(pwd)"
+chromeos_version="R122"
+
 apply_patches()
 {
 for patch_type in "base" "others" "chromeos" "all_devices" "surface_devices" "surface_go_devices" "surface_mwifiex_pcie_devices" "surface_np3_devices" "macbook" "fyde"; do
@@ -10,12 +28,22 @@ for patch_type in "base" "others" "chromeos" "all_devices" "surface_devices" "su
 		done
 	fi
 done
+
+if [ echo "$1" | grep -qi "surface" ]; then
+	for patch in ./kernel-patches/"$1"/surface/*.patch; do
+		echo "Applying patch: $patch"
+		patch -d"./kernels/$1" -p1 --no-backup-if-mismatch -N < "$patch" || { echo "Kernel $1 patch failed"; exit 1; }
+	done
+fi
 }
 
 make_config()
 {
 sed -i -z 's@# Detect buggy gcc and clang, fixed in gcc-11 clang-14.\n\tdef_bool@# Detect buggy gcc and clang, fixed in gcc-11 clang-14.\n\tdef_bool $(success,echo 0)\n\t#def_bool@g' ./kernels/$1/init/Kconfig
 if [ "x$1" == "xchromebook-4.19" ]; then config_subfolder=""; else config_subfolder="/chromeos"; fi
+
+make mrproper
+
 case "$1" in
 	6.6|6.1|5.15|5.10|5.4|4.19)
 		make -C "./kernels/$1" O=out allmodconfig || { echo "Kernel $1 configuration failed"; exit 1; }
@@ -37,8 +65,20 @@ case "$1" in
 		cat "./kernel-patches/fyde_config"  >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		make -C "./kernels/$1" O=out chromeos_defconfig || { echo "Kernel $1 configuration failed"; exit 1; }
 		cp "./kernels/$1/out/.config" "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
+		echo 'CONFIG_LOCALVERSION="-fyde"' > out/.config
 	;;
-	fyde*)
+	surface*)
+		echo 'CONFIG_LOCALVERSION="-chromebook-brunch-damenly"' > "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
+		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/base.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
+		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/x86_64/common.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
+		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/x86_64/chromeos-intel-pineview.flavour.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
+		cat "./kernel-patches/fyde_config"  >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
+		cat "./kernel-patches/surface_config"  >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
+		make -C "./kernels/$1" O=out chromeos_defconfig || { echo "Kernel $1 configuration failed"; exit 1; }
+		cp "./kernels/$1/out/.config" "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
+		echo 'CONFIG_LOCALVERSION="-surface"' > out/.config
+	;;
+	*)
 		echo 'CONFIG_LOCALVERSION="-fyde-brunch-damenly"' > "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/base.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/x86_64/common.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
@@ -50,7 +90,7 @@ case "$1" in
 esac
 }
 
-download_and_patch_kernels()
+download_and_build_kernels()
 {
 # Find the ChromiumOS kernel remote path corresponding to the release
 kernel_remote_path="$(git ls-remote https://chromium.googlesource.com/chromiumos/third_party/kernel/ | grep "refs/heads/release-$chromeos_version" | head -1 | sed -e 's#.*\t##' -e 's#chromeos-.*##' | sort -u)chromeos-"
@@ -59,19 +99,38 @@ echo "kernel_remote_path=$kernel_remote_path"
 
 # Download kernels source
 kernels="6.6"
+configs="surface"
+for config in $configs; do
 for kernel in $kernels; do
 	kernel_version=$(curl -Ls "https://chromium.googlesource.com/chromiumos/third_party/kernel/+/$kernel_remote_path$kernel/Makefile?format=TEXT" | base64 --decode | sed -n -e 1,4p | sed -e '/^#/d' | cut -d'=' -f 2 | sed -z 's#\n##g' | sed 's#^ *##g' | sed 's# #.#g')
 	echo "kernel_version=$kernel_version"
+	local kdir="${config}-${kernel}"
 	[ ! "x$kernel_version" == "x" ] || { echo "Kernel version not found"; exit 1; }
 	case "$kernel" in
 		6.6)
 			echo "Downloading ChromiumOS kernel source for kernel $kernel version $kernel_version"
-			curl -L "https://chromium.googlesource.com/chromiumos/third_party/kernel/+archive/$kernel_remote_path$kernel.tar.gz" -o "./kernels/chromiumos-$kernel.tar.gz" || { echo "Kernel source download failed"; exit 1; }
-			mkdir "./kernels/chromebook-6.6" # "./kernels/6.6"
-			tar -C "./kernels/chromebook-6.6" -zxf "./kernels/chromiumos-$kernel.tar.gz" || { echo "Kernel $kernel source extraction failed"; exit 1; }
-			rm -f "./kernels/chromiumos-$kernel.tar.gz"
-			apply_patches "chromebook-6.6"
-			make_config "chromebook-6.6"
+			[ ! -f "./kernels/chromiumos-$kernel.tar.gz" ] && curl -L "https://chromium.googlesource.com/chromiumos/third_party/kernel/+archive/$kernel_remote_path$kernel.tar.gz" -o "./kernels/chromiumos-$kernel.tar.gz" || { echo "Kernel source download failed"; exit 1; }
+			mkdir "./kernels/$kdir" # ./kernels/6.6"
+			tar -C "./kernels/$kdir" -zxf "./kernels/chromiumos-$kernel.tar.gz" || { echo "Kernel $kernel source extraction failed"; exit 1; }
+			apply_patches "$kdir"
+			make_config "$kdir"
+
+			echo "Building kernel $kernel"
+
+			KCONFIG_NOTIMESTAMP=1 KBUILD_BUILD_TIMESTAMP='' KBUILD_BUILD_USER=chronos KBUILD_BUILD_HOST=localhost make -C "./kernels/$kernel" -j"$NTHREADS" O=out || { echo "Kernel build failed"; exit 1; }
+
+			pushd
+			kernel=$kdir
+			cd "./kernels/$kernel"
+			kernel_version="$(file ./out/arch/x86/boot/bzImage | cut -d' ' -f9)"
+			mkdir ${cwd}/kernel/$kernel
+			[ ! "$kernel_version" == "" ] || { echo "Failed to read version for kernel $kernel"; exit 1; }
+			cp ./out/arch/x86/boot/bzImage ${cwd}/kernel/${kernel}/vmlinux || { echo "Failed to copy the kernel $kernel"; exit 1; }
+			make -j"$NTHREADS" O=out INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${cwd}/kernel/${kernel} modules_install || { echo "Failed to install modules for kernel $kernel"; exit 1; }
+			rm -f ${cwd}/kernel/${kernel}/lib/modules/"$kernel_version"/build || { echo "Failed to remove the build directory for kernel $kernel"; exit 1; }
+			rm -f ${cwd}/kernel/${kernel}/lib/modules/"$kernel_version"/source || { echo "Failed to remove the source directory for kernel $kernel"; exit 1; }
+			popd
+
 			#mkdir "./kernels/6.6"
 			#tar -C "./kernels/6.6" -zxf "./kernels/chromiumos-$kernel.tar.gz" chromeos || { echo "Kernel $kernel source extraction failed"; exit 1; }
 			#echo "Downloading Mainline kernel source for kernel $kernel version $kernel_version"
@@ -124,37 +183,14 @@ for kernel in $kernels; do
 		;;
 	esac
 done
-}
+done
 
-if [ ! -d /home/runner/work ]; then NTHREADS=$(nproc); else NTHREADS=$(($(nproc)*4)); fi
+download_and_build_kernels
+rm -rf kernels/*
 
-rm -rf ./kernels
-mkdir ./kernels
-
-rm -rf ./kernel
-mkdir ./kernel
-
-#only for test
-#mkdir -p kernel/lib/modules/
-#touch kernel/kernel-chromebook-6.6
-#touch kernel/lib/modules/9
-#exit 0
-
-cwd="$(pwd)"
-chromeos_version="R122"
-download_and_patch_kernels
-
-kernels=$(ls -d ./kernels/* | sed 's#./kernels/##g')
-
+for config in $configs; do
 for kernel in $kernels; do
-	echo "Building kernel $kernel"
-	KCONFIG_NOTIMESTAMP=1 KBUILD_BUILD_TIMESTAMP='' KBUILD_BUILD_USER=chronos KBUILD_BUILD_HOST=localhost make -C "./kernels/$kernel" -j"$NTHREADS" O=out || { echo "Kernel build failed"; exit 1; }
-
-	cd "./kernels/$kernel"
-	kernel_version="$(file ./out/arch/x86/boot/bzImage | cut -d' ' -f9)"
-	[ ! "$kernel_version" == "" ] || { echo "Failed to read version for kernel $kernel"; exit 1; }
-	cp ./out/arch/x86/boot/bzImage ${cwd}/kernel/kernel-"$kernel" || { echo "Failed to copy the kernel $kernel"; exit 1; }
-	make -j"$NTHREADS" O=out INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${cwd}/kernel modules_install || { echo "Failed to install modules for kernel $kernel"; exit 1; }
-	rm -f ${cwd}/kernel/lib/modules/"$kernel_version"/build || { echo "Failed to remove the build directory for kernel $kernel"; exit 1; }
-	rm -f ${cwd}/kernel/lib/modules/"$kernel_version"/source || { echo "Failed to remove the source directory for kernel $kernel"; exit 1; }
+	local kdir="${config}-${kernel}"
+	tar -C kernel/$kdir -zcvf "kernels/${kdir}.tar.gz" ./*
+done
 done
