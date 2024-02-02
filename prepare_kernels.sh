@@ -20,7 +20,7 @@ chromeos_version="R122"
 
 apply_patches()
 {
-for patch_type in "base" "others" "chromeos" "all_devices" "surface_devices" "surface_go_devices" "surface_mwifiex_pcie_devices" "surface_np3_devices" "macbook" "fyde"; do
+for patch_type in "base" "others" "chromeos" "all_devices" "surface_devices" "surface_go_devices" "surface_mwifiex_pcie_devices" "surface_np3_devices" "macbook" "fyde" ; do
 	if [ -d "./kernel-patches/$1/$patch_type" ]; then
 		for patch in ./kernel-patches/"$1/$patch_type"/*.patch; do
 			echo "Applying patch: $patch"
@@ -58,7 +58,6 @@ case "$1" in
 		cp "./kernels/$1/out/.config" "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 	;;
 	chromebook*)
-		echo 'CONFIG_LOCALVERSION="-chromebook-brunch-damenly"' > "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/base.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/x86_64/common.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/x86_64/chromeos-intel-pineview.flavour.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
@@ -68,7 +67,6 @@ case "$1" in
 		echo 'CONFIG_LOCALVERSION="-fyde"' > out/.config
 	;;
 	surface*)
-		echo 'CONFIG_LOCALVERSION="-chromebook-brunch-damenly"' > "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/base.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/x86_64/common.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
 		sed '/CONFIG_DEBUG_INFO\|CONFIG_MODULE_COMPRESS/d' "./kernels/$1/chromeos/config$config_subfolder/x86_64/chromeos-intel-pineview.flavour.config" >> "./kernels/$1/arch/x86/configs/chromeos_defconfig" || { echo "Kernel $1 configuration failed"; exit 1; }
@@ -110,7 +108,7 @@ for kernel in $kernels; do
 		6.6)
 			echo "Downloading ChromiumOS kernel source for kernel $kernel version $kernel_version"
 			[ ! -f "./kernels/chromiumos-$kernel.tar.gz" ] && curl -L "https://chromium.googlesource.com/chromiumos/third_party/kernel/+archive/$kernel_remote_path$kernel.tar.gz" -o "./kernels/chromiumos-$kernel.tar.gz" || { echo "Kernel source download failed"; exit 1; }
-			mkdir "./kernels/$kdir" # ./kernels/6.6"
+			mkdir "./kernels/$kdir"
 			tar -C "./kernels/$kdir" -zxf "./kernels/chromiumos-$kernel.tar.gz" || { echo "Kernel $kernel source extraction failed"; exit 1; }
 			apply_patches "$kdir"
 			make_config "$kdir"
@@ -123,12 +121,12 @@ for kernel in $kernels; do
 			kernel=$kdir
 			cd "./kernels/$kernel"
 			kernel_version="$(file ./out/arch/x86/boot/bzImage | cut -d' ' -f9)"
-			mkdir ${cwd}/kernel/$kernel
+			mkdir "${cwd}/kernel/$kernel"
 			[ ! "$kernel_version" == "" ] || { echo "Failed to read version for kernel $kernel"; exit 1; }
 			cp ./out/arch/x86/boot/bzImage ${cwd}/kernel/${kernel}/vmlinux || { echo "Failed to copy the kernel $kernel"; exit 1; }
 			make -j"$NTHREADS" O=out INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${cwd}/kernel/${kernel} modules_install || { echo "Failed to install modules for kernel $kernel"; exit 1; }
-			rm -f ${cwd}/kernel/${kernel}/lib/modules/"$kernel_version"/build || { echo "Failed to remove the build directory for kernel $kernel"; exit 1; }
-			rm -f ${cwd}/kernel/${kernel}/lib/modules/"$kernel_version"/source || { echo "Failed to remove the source directory for kernel $kernel"; exit 1; }
+			rm -f ${cwd}/kernel/${kernel}/lib/modules/"$kernel_version"/build
+			rm -f ${cwd}/kernel/${kernel}/lib/modules/"$kernel_version"/source
 			popd
 
 			#mkdir "./kernels/6.6"
@@ -185,12 +183,15 @@ for kernel in $kernels; do
 done
 done
 
+}
+
 download_and_build_kernels
+
 rm -rf kernels/*
 
 for config in $configs; do
 for kernel in $kernels; do
 	local kdir="${config}-${kernel}"
-	tar -C kernel/$kdir -zcvf "kernels/${kdir}.tar.gz" ./*
+	tar -C kernel/$kdir -zcvf "kernels/${kdir}.tar.gz" ./
 done
 done
