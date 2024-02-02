@@ -12,8 +12,6 @@ jobs:
   build-kernels:
     name: Prepare Kernels
     runs-on: ubuntu-22.04
-    outputs:
-      matrix: ${{ steps.kernels.outputs.matrix }}
     steps:
       - name: Install dependencies
         run: |
