@@ -199,7 +199,7 @@ done
 
 }
 
-download_and_build_kernels $1
+#download_and_build_kernels $1
 
 cd $cwd
 rm -rf kernels/*
@@ -207,6 +207,7 @@ rm -rf kernels/*
 for config in $configs; do
 for kernel in $kernels; do
 	kdir="${config}-${kernel}"
+	mkdir  -p kernel/{$kdir}/test
 	tar -C kernel/$kdir -zcvf "${cwd}/${kdir}.tar.gz" ./
 done
 done
