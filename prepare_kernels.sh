@@ -110,7 +110,7 @@ echo "kernel_remote_path=$kernel_remote_path"
 # Download kernels source
 kernels="6.6"
 configs="$1"
-[ -z "configs" ] && { echo "$1 is empty"; exit 1; }
+[ -z "$configs" ] && { echo "$1 is empty"; exit 1; }
 
 for config in $configs; do
 for kernel in $kernels; do
@@ -199,7 +199,7 @@ done
 
 }
 
-download_and_build_kernels
+download_and_build_kernels $1
 
 cd $cwd
 rm -rf kernels/*
@@ -207,6 +207,6 @@ rm -rf kernels/*
 for config in $configs; do
 for kernel in $kernels; do
 	kdir="${config}-${kernel}"
-	tar -C kernel/$kdir -zcvf "kernels/${kdir}.tar.gz" ./
+	tar -C kernel/$kdir -zcvf "${cwd}/${kdir}.tar.gz" ./
 done
 done
