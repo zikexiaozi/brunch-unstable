@@ -74,6 +74,7 @@ jobs:
         run: echo "RELEASE_VERSION_TYPE=x86_64" >> $GITHUB_ENV
       - name: Generate release details
         run: |
+          ls -lR .
           RELEASE_DATE=$(date '+%Y%m%d%H%M%S')
           RELEASE_VERSION=""
           RELEASE_FILE="${RELEASE_DATE}_${RELEASE_VERSION_TYPE}.tar.gz"
