@@ -15,9 +15,8 @@ jobs:
     strategy:
       matrix:
         kernels: [chromebook, surface]
-    outputs:
-        matrix:
-          kernels: ${{ strategy.matrix.kernels  }}
+    #outputs:
+    #    kernels: ${{ strategy.matrix.kernels  }}
     steps:
       - name: Install dependencies
         run: |
@@ -63,9 +62,9 @@ jobs:
       contents: write
     needs: [build-firmware, build-kernels]
     runs-on: ubuntu-22.04
-    strategy:
-        matrix:
-            kernel: ${{ fromJson(needs.build-kernels.outputs.matrix.kernels) }}
+    #strategy:
+#        matrix:
+#            kernel: ${{ fromJson(needs.build-kernels.outputs.matrix.kernels) }}
     steps:
       - name: Download built kernels
         uses: actions/download-artifact@v3
