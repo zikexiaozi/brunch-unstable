@@ -12,6 +12,12 @@ jobs:
   build-kernels:
     name: Prepare Kernels
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        kernels: [chromebook, surface]
+    outputs:
+        matrix:
+          kernels: ${{ strategy.matrix.kernels  }}
     steps:
       - name: Install dependencies
         run: |
@@ -22,14 +28,14 @@ jobs:
       - name: Checkout Brunch source code
         uses: actions/checkout@v4
       - name: Download kernels and apply patches
-        run: ./prepare_kernels.sh
-      - name: Compress kernels source files
-        run: tar -C kernels -zvcf /tmp/kernels.tar.gz ./
+        run: ./prepare_kernels.sh ${{ matrix.kernels  }}
+      #- name: Compress kernels source files
+      #  run: tar -C kernels -zvcf /tmp/kernel.tar.gz ./
       - name: Upload kernels source
         uses: actions/upload-artifact@v3
         with:
-          name: kernels
-          path: /tmp/kernels.tar.gz
+          name: built-kernel-${{ matrix.kernels  }}
+          path: ${{ matrix.kernels  }}*.tar.gz
           if-no-files-found: error
   build-firmware:
     name: Build firmware and package
@@ -57,23 +63,14 @@ jobs:
       contents: write
     needs: [build-firmware, build-kernels]
     runs-on: ubuntu-22.04
+    strategy:
+        matrix:
+            kernel: ${{ fromJson(needs.build-kernels.outputs.matrix.kernels) }}
     steps:
       - name: Download built kernels
         uses: actions/download-artifact@v3
-        with:
-          name: kernels
       - name: Download built firmware
         uses: actions/download-artifact@v3
-        with:
-          name: firmware
-      - name: go repackaging
-        run: |
-          release_files="firmware.tar.gz"
-          mkdir temp
-          tar -xvf kernels.tar.gz -C temp
-          kernel_files="$(ls ./temp/)"
-          release_files="$release_files $kernel_files"
-          echo "release_files=${release_files}" >> $GITHUB_ENV
       - name: Identify stable version
         run: echo "RELEASE_VERSION_TYPE=x86_64" >> $GITHUB_ENV
       - name: Generate release details
@@ -88,7 +85,7 @@ jobs:
       - name: Create a release and upload artifacts as assets
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "firmware.tar.gz,temp/*tar.gz"
+          artifacts: "*tar.gz"
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
           tag: "${{ env.RELEASE_DATE }}"
