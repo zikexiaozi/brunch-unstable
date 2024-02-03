@@ -101,8 +101,6 @@ kernel_remote_path="$(git ls-remote https://chromium.googlesource.com/chromiumos
 [ ! "x$kernel_remote_path" == "x" ] || { echo "Remote path not found"; exit 1; }
 echo "kernel_remote_path=$kernel_remote_path"
 
-
-
 for config in $configs; do
 for kernel in $kernels; do
 	kernel_version=$(curl -Ls "https://chromium.googlesource.com/chromiumos/third_party/kernel/+/$kernel_remote_path$kernel/Makefile?format=TEXT" | base64 --decode | sed -n -e 1,4p | sed -e '/^#/d' | cut -d'=' -f 2 | sed -z 's#\n##g' | sed 's#^ *##g' | sed 's# #.#g')
@@ -196,7 +194,7 @@ configs="$1"
 # Download kernels source
 kernels="6.6"
 
-#download_and_build_kernels
+download_and_build_kernels
 
 cd $cwd
 rm -rf kernels/*
@@ -204,7 +202,6 @@ rm -rf kernels/*
 for config in $configs; do
 for kernel in $kernels; do
 	kdir="${config}-${kernel}"
-	mkdir -p "kernel/${kdir}/test"
 	tar -C kernel/$kdir -zcvf "${cwd}/${kdir}.tar.gz" ./
 done
 done
