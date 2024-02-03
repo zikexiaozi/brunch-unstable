@@ -9,12 +9,6 @@ mkdir ./kernels
 rm -rf ./kernel
 mkdir ./kernel
 
-#only for test
-#mkdir -p kernel/lib/modules/
-#touch kernel/kernel-chromebook-6.6
-#touch kernel/lib/modules/9
-#exit 0
-
 cwd="$(pwd)"
 chromeos_version="R122"
 
@@ -107,10 +101,7 @@ kernel_remote_path="$(git ls-remote https://chromium.googlesource.com/chromiumos
 [ ! "x$kernel_remote_path" == "x" ] || { echo "Remote path not found"; exit 1; }
 echo "kernel_remote_path=$kernel_remote_path"
 
-# Download kernels source
-kernels="6.6"
-configs="$1"
-[ -z "$configs" ] && { echo "$1 is empty"; exit 1; }
+
 
 for config in $configs; do
 for kernel in $kernels; do
@@ -199,7 +190,13 @@ done
 
 }
 
-#download_and_build_kernels $1
+configs="$1"
+[ -z "$configs" ] && { echo "$1 is empty"; exit 1; }
+
+# Download kernels source
+kernels="6.6"
+
+#download_and_build_kernels
 
 cd $cwd
 rm -rf kernels/*
@@ -207,7 +204,7 @@ rm -rf kernels/*
 for config in $configs; do
 for kernel in $kernels; do
 	kdir="${config}-${kernel}"
-	mkdir  -p kernel/{$kdir}/test
+	mkdir -p "kernel/${kdir}/test"
 	tar -C kernel/$kdir -zcvf "${cwd}/${kdir}.tar.gz" ./
 done
 done
