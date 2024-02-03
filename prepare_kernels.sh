@@ -202,6 +202,6 @@ rm -rf kernels/*
 for config in $configs; do
 for kernel in $kernels; do
 	kdir="${config}-${kernel}"
-	tar -C kernel/$kdir -zcvf "${cwd}/${kdir}.tar.gz" ./
+	tar --owner=0 --group=0 -C kernel/$kdir -zcvf "${cwd}/${kdir}.tar.gz" ./
 done
 done

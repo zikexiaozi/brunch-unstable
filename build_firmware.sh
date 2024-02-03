@@ -62,5 +62,5 @@ download_alsa_conf alsa-ucm-conf.tar.gz
 tar xvzf alsa-ucm-conf.tar.gz -C ./final/usr/share/alsa --strip-components=1 --wildcards "*/ucm" "*/ucm2"
 
 # compress all firmwares and ucm conf
-tar -C final -zcvf /tmp/firmware.tar.gz ./
+tar --owner=0 --group=0 -C final -zcvf /tmp/firmware.tar.gz ./
 rm -r ./linux-firmware || { echo "Failed to cleanup firmwares directory"; exit 1; }
